@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  config-center:
+    build: .
+    image: config-center:latest
+    container_name: config-center
+    ports:
+      - "8080:8080"
+    environment:
+      # MySQL 连接信息（请根据实际情况修改）
+      SPRING_DATASOURCE_URL: jdbc:mysql://your-mysql-host:3306/your_db?useSSL=false&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: your_mysql_user
+      SPRING_DATASOURCE_PASSWORD: your_mysql_password
+      # Redis 连接信息（请根据实际情况修改）
+      SPRING_REDIS_HOST: your-redis-host
+      SPRING_REDIS_PORT: 6379
+
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: yourpassword
+      MYSQL_DATABASE: your_db
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./init/mysql:/docker-entrypoint-initdb.d
+
+  redis:
+    image: redis:7.2
+    container_name: redis
+    ports:
+      - "6379:6379"
+
+volumes:
+  mysql-data:
+  redis-data:
+
+networks:
+  config-network:
+    driver: bridge 

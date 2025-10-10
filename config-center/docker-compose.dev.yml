@@ -1,0 +1,126 @@
+# Docker Compose 版本声明，定义文件格式版本
+version: '3.8'
+
+# 定义服务列表，每个服务对应一个容器
+services:
+  mysql:
+    image: mysql:8.0-oracle  # 使用MySQL官方完整版镜像
+    # 容器名称，便于管理和识别
+    container_name: config-center-mysql-dev
+    # 环境变量配置，设置数据库连接参数
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_HOST: ${MYSQL_ROOT_HOST}
+    # 端口映射：宿主机端口3307 -> 容器端口3306
+    ports:
+      - "3306:3306"
+    # 数据卷挂载，持久化数据
+    volumes:
+      # MySQL 数据目录挂载到宿主机，数据持久化
+      - ./mysql:/var/lib/mysql
+      # 初始化脚本目录挂载，容器启动时自动执行SQL脚本
+      - ./init/mysql:/docker-entrypoint-initdb.d
+    # MySQL 启动命令参数，添加bind-address确保监听所有网络接口
+    command: --bind-address=0.0.0.0 --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    # 指定容器使用的网络
+    networks:
+      - config-center-network
+    # 健康检查配置，定期检查服务是否正常
+    healthcheck:
+      # 使用 mysqladmin ping 命令检查 MySQL 是否响应
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      # 检查间隔时间
+      interval: 10s
+      # 检查超时时间
+      timeout: 5s
+      # 重试次数
+      retries: 5
+
+  # Redis 缓存服务
+  redis:
+    image: redis:7.0.11  # 使用Redis官方完整版镜像
+    # 容器名称
+    container_name: config-center-redis-dev
+    # Redis 启动命令，设置密码、持久化、绑定地址
+    command: redis-server --requirepass ${REDIS_PASSWORD} --appendonly yes --bind 0.0.0.0
+    # 端口映射：宿主机端口6380 -> 容器端口6379
+    ports:
+      - "6379:6379"
+    # 数据卷挂载
+    volumes:
+      # Redis 数据目录挂载，持久化数据
+      - ./redis:/data
+    # 指定容器使用的网络
+    networks:
+      - config-center-network
+    # 健康检查配置
+    healthcheck:
+      # 使用 redis-cli ping 命令检查 Redis 是否响应
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      # 检查间隔时间
+      interval: 10s
+      # 检查超时时间
+      timeout: 5s
+      # 重试次数
+      retries: 5
+
+  # Adminer 数据库管理工具（Web界面）
+  adminer:
+    # 使用 Adminer 最新镜像
+    image: adminer:latest
+    # 容器名称
+    container_name: config-center-adminer-dev
+    # 端口映射：宿主机端口18082 -> 容器端口8080
+    ports:
+      - "18082:8080"
+    # 环境变量配置
+    environment:
+      # 设置默认连接的数据库服务器（使用服务名）
+      ADMINER_DEFAULT_SERVER: mysql
+    # 依赖关系：启动前先启动 mysql 服务
+    depends_on:
+      - mysql
+    # 指定容器使用的网络
+    networks:
+      - config-center-network
+
+  # Redis Commander Redis 管理工具（Web界面）
+  redis-commander:
+    # 使用 Redis Commander 最新镜像
+    image: rediscommander/redis-commander:latest
+    # 容器名称
+    container_name: config-center-redis-commander-dev
+    # 端口映射：宿主机端口18083 -> 容器端口8081
+    ports:
+      - "18083:8081"
+    # 环境变量配置
+    environment:
+      # 配置 Redis 连接信息：名称:主机:端口:数据库:密码
+      REDIS_HOSTS: local:redis:6379:0:${REDIS_PASSWORD}
+    # 依赖关系：启动前先启动 redis 服务
+    depends_on:
+      - redis
+    # 指定容器使用的网络
+    networks:
+      - config-center-network
+
+# 定义自定义网络
+networks:
+  # 创建名为 config-center-network 的桥接网络
+  config-center-network:
+    # 网络名称，便于识别和管理
+    name: config-center-network
+
+# 定义数据卷，用于数据持久化
+volumes:
+  # MySQL 数据卷，持久化数据库文件
+  mysql_data:
+    # 数据卷名称
+    name: config-center-mysql-data
+  # Redis 数据卷，持久化缓存数据
+  redis_data:
+    # 数据卷名称
+    name: config-center-redis-data 
