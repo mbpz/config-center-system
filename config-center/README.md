@@ -187,3 +187,4 @@ mvn package
 java -jar target/config-center-xxx.jar --spring.profiles.active=dev
 
 mvn spring-boot:run -Dspring-boot.run.profiles=dev
+mvn clean spring-boot:run -Dspring-boot.run.profiles=dev

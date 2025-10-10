@@ -1,2 +1,5 @@
 .DS_Store
 config-web/package-lock.json
+config-web/node_modules
+config-web/src/.umi
+config-center/target
