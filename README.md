@@ -397,3 +397,7 @@ docker-compose logs -f redis
 ---
 
 **注意**: 生产环境部署时请修改默认密码，建议启用数据库 SSL 连接，并根据实际需求调整配置参数。
+
+本地调试
+config-web npm run start
+config-center mvn clean spring-boot:run -Dspring-boot.run.profiles=devls
