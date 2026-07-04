@@ -35,13 +35,15 @@ server:
   port: ${SERVER_PORT:8080}
 
 # Security 配置
-CC_ADMIN_PASSWORD: ${CC_ADMIN_PASSWORD:}
-CC_USER_PASSWORD: ${CC_USER_PASSWORD:}
-CC_CORS_ALLOWED_ORIGINS: ${CC_CORS_ALLOWED_ORIGINS:*}
+# ⚠️ 生产环境必须修改 CC_ADMIN_PASSWORD！
+CC_ADMIN_PASSWORD: admin
+CC_USER_PASSWORD: user
+CC_CORS_ALLOWED_ORIGINS: '*'
 
 # 加密配置
 # ⚠️ 生产环境必须设置！未设置时自动生成随机密钥（每次重启失效）
-CC_MASTER_KEY: ${CC_MASTER_KEY:}
+# 注意: 使用 env.CC_MASTER_KEY 避免与自身循环引用
+CC_MASTER_KEY:
 
 logging:
   level:

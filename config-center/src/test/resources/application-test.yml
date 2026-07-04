@@ -1,0 +1,21 @@
+# 测试环境配置
+spring:
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
+  redis:
+    enabled: false
+
+# Security 测试配置
+CC_ADMIN_PASSWORD: test_admin_pass
+CC_USER_PASSWORD: test_user_pass
+CC_CORS_ALLOWED_ORIGINS: '*'
+
+# 加密测试配置
+CC_MASTER_KEY: test_master_key_for_unit_tests_only
+
+logging:
+  level:
+    root: WARN
+    com.crgmhrc.configcenter: INFO

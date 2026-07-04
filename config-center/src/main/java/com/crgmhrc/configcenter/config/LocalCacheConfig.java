@@ -15,7 +15,6 @@ import java.util.concurrent.TimeUnit;
 public class LocalCacheConfig {
 
     @Bean
-    @Primary
     public CacheManager localCacheManager() {
         CaffeineCacheManager cacheManager = new CaffeineCacheManager();
         cacheManager.setCaffeine(Caffeine.newBuilder()
