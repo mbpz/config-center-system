@@ -97,6 +97,8 @@ export async function createConfig(data: ConfigItem) {
   return request('/api/v1/configs', {
     method: 'POST',
     data,
+    requestType: 'json',
+    credentials: 'include',
   });
 }
 
@@ -105,6 +107,8 @@ export async function updateConfig(configKey: string, data: ConfigItem) {
   return request(`/api/v1/configs/${configKey}`, {
     method: 'PUT',
     data,
+    requestType: 'json',
+    credentials: 'include',
   });
 }
 
@@ -115,6 +119,7 @@ export async function deleteConfig(
 ) {
   return request(`/api/v1/configs/${configKey}?environment=${environment}`, {
     method: 'DELETE',
+    credentials: 'include',
   });
 }
 

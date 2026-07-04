@@ -1,12 +1,15 @@
-// SPDX-License-Identifier: Apache-2.0n// Copyright 2026 mbpz
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 mbpz
 
 export default (initialState: API.UserInfo) => {
-  // 在这里按照初始化数据定义项目中的权限，统一管理
-  // 参考文档 https://umijs.org/docs/max/access
-  const canSeeAdmin = !!(
-    initialState && initialState.name !== 'dontHaveAccess'
-  );
+  const roles = initialState?.roles || [];
+
   return {
-    canSeeAdmin,
+    // 已认证用户可见
+    canAccess: !!initialState?.authenticated,
+    // ADMIN 角色可管理配置
+    canAdmin: roles.includes('ROLE_ADMIN'),
+    // USER 或 ADMIN 可查看
+    canView: roles.includes('ROLE_USER') || roles.includes('ROLE_ADMIN'),
   };
 };

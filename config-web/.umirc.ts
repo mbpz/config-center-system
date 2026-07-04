@@ -17,6 +17,11 @@ export default defineConfig({
   },
   routes: [
     {
+      path: '/login',
+      component: './Login',
+      layout: false,
+    },
+    {
       path: '/',
       redirect: '/config',
     },
@@ -24,26 +29,13 @@ export default defineConfig({
       name: '配置管理',
       path: '/config',
       component: './Config',
+      access: 'canAdmin',
     },
     {
       name: '缓存管理',
       path: '/cache',
       component: './Cache',
-    },
-    {
-      name: '首页',
-      path: '/home',
-      component: './Home',
-    },
-    {
-      name: '权限演示',
-      path: '/access',
-      component: './Access',
-    },
-    {
-      name: ' CRUD 示例',
-      path: '/table',
-      component: './Table',
+      access: 'canView',
     },
   ],
   npmClient: 'yarn',

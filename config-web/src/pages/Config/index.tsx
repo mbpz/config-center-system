@@ -43,12 +43,14 @@ import {
   Tag,
   Tooltip,
 } from 'antd';
+import { history, useModel } from '@umijs/max';
 import React, { useEffect, useState } from 'react';
 
 const { Option } = Select;
 const { TextArea } = Input;
 
 const ConfigList: React.FC = () => {
+  const { initialState } = useModel('@@initialState');
   const [configs, setConfigs] = useState<ConfigItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
@@ -226,9 +228,18 @@ const ConfigList: React.FC = () => {
     </Menu>
   );
 
+  // 认证检查：未登录跳转 /login
   useEffect(() => {
-    fetchConfigs();
-    fetchHealthStatus();
+    if (initialState && !initialState.authenticated) {
+      history.replace('/login');
+    }
+  }, [initialState]);
+
+  useEffect(() => {
+    if (initialState?.authenticated) {
+      fetchConfigs();
+      fetchHealthStatus();
+    }
   }, []);
 
   const columns = [

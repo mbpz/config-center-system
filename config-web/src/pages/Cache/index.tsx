@@ -38,9 +38,11 @@ import {
   Tag,
   Tooltip,
 } from 'antd';
+import { history, useModel } from '@umijs/max';
 import React, { useEffect, useState } from 'react';
 
 const CacheManagement: React.FC = () => {
+  const { initialState } = useModel('@@initialState');
   const [healthStatus, setHealthStatus] = useState<HealthStatus | null>(null);
   const [redisHealth, setRedisHealth] = useState<any>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -165,11 +167,20 @@ const CacheManagement: React.FC = () => {
     return `${(size / (1024 * 1024)).toFixed(1)}MB`;
   };
 
+  // 认证检查：未登录跳转 /login
   useEffect(() => {
-    fetchHealthStatus();
-    fetchRedisHealth();
-    fetchCacheList();
-    fetchCacheStats();
+    if (initialState && !initialState.authenticated) {
+      history.replace('/login');
+    }
+  }, [initialState]);
+
+  useEffect(() => {
+    if (initialState?.authenticated) {
+      fetchHealthStatus();
+      fetchRedisHealth();
+      fetchCacheList();
+      fetchCacheStats();
+    }
   }, []);
 
   const columns = [

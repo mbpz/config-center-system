@@ -34,6 +34,11 @@ mybatis:
 server:
   port: ${SERVER_PORT:8080}
 
+# Security 配置
+CC_ADMIN_PASSWORD: ${CC_ADMIN_PASSWORD:}
+CC_USER_PASSWORD: ${CC_USER_PASSWORD:}
+CC_CORS_ALLOWED_ORIGINS: ${CC_CORS_ALLOWED_ORIGINS:*}
+
 logging:
   level:
     root: INFO
