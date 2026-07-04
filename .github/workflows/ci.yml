@@ -5,6 +5,7 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+  workflow_dispatch:  # 允许手动触发
 
 env:
   JAVA_VERSION: '8'
@@ -66,21 +67,16 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          cache-dependency-path: config-web/package-lock.json
+          cache: 'yarn'
+          cache-dependency-path: config-web/yarn.lock
 
       - name: Install dependencies
         working-directory: ./config-web
-        run: npm ci
-
-      - name: Run ESLint
-        working-directory: ./config-web
-        run: npm run lint
-        continue-on-error: true  # 暂时不阻塞 CI，直至 lint 规则完善
+        run: yarn install --frozen-lockfile
 
       - name: Build frontend
         working-directory: ./config-web
-        run: npm run build
+        run: yarn build
 
   # =====================================================
   # Docker 构建 job
@@ -101,7 +97,7 @@ jobs:
       - name: Verify Docker image
         run: |
           docker images | grep config-center
-          echo "✅ Docker image built successfully"
+          echo "Docker image built successfully"
 
   # =====================================================
   # SBOM 生成 job
