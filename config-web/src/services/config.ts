@@ -174,3 +174,33 @@ export async function refreshAllCache() {
     method: 'POST',
   });
 }
+
+// 审计日志
+export interface AuditLogEntry {
+  id: number;
+  configKey: string;
+  environment: string;
+  oldValue?: string;
+  newValue?: string;
+  changeType: string;
+  operator: string;
+  changeTime: string;
+}
+
+export interface AuditLogResult {
+  success: boolean;
+  data: AuditLogEntry[];
+  total: number;
+}
+
+export async function getAuditLog(key?: string, environment?: string) {
+  let url = '/api/v1/audit';
+  const params: string[] = [];
+  if (key) params.push(`key=${encodeURIComponent(key)}`);
+  if (environment) params.push(`environment=${environment}`);
+  if (params.length > 0) url += '?' + params.join('&');
+  return request<AuditLogResult>(url, {
+    method: 'GET',
+    credentials: 'include',
+  });
+}

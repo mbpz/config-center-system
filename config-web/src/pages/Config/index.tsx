@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0n// Copyright 2026 mbpz
 
 import {
+  AuditLogEntry,
   checkHealth,
   ConfigItem,
   ConfigListParams,
   createConfig,
   deleteConfig,
   getConfigList,
+  getAuditLog,
   HealthStatus,
   refreshAllCache,
   refreshEnvironmentCache,
@@ -17,6 +19,7 @@ import {
   DatabaseOutlined,
   DeleteOutlined,
   EditOutlined,
+  HistoryOutlined,
   PlusOutlined,
   ReloadOutlined,
   SearchOutlined,
@@ -60,6 +63,10 @@ const ConfigList: React.FC = () => {
   const [selectedEnvironment, setSelectedEnvironment] = useState('dev');
   const [healthStatus, setHealthStatus] = useState<HealthStatus | null>(null);
   const [cacheRefreshing, setCacheRefreshing] = useState(false);
+  const [historyVisible, setHistoryVisible] = useState(false);
+  const [historyRecords, setHistoryRecords] = useState<AuditLogEntry[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyKey, setHistoryKey] = useState<string | null>(null);
 
   // 获取配置列表
   const fetchConfigs = async (params: ConfigListParams = {}) => {
@@ -180,6 +187,23 @@ const ConfigList: React.FC = () => {
     setEditingConfig(null);
     form.resetFields();
     setModalVisible(true);
+  };
+
+  // 查看配置变更历史
+  const handleShowHistory = async (record: ConfigItem) => {
+    setHistoryKey(record.configKey);
+    setHistoryVisible(true);
+    setHistoryLoading(true);
+    try {
+      const result = await getAuditLog(record.configKey, selectedEnvironment);
+      setHistoryRecords(result?.data || []);
+    } catch (error) {
+      message.error('获取变更历史失败');
+      console.error('获取变更历史失败:', error);
+      setHistoryRecords([]);
+    } finally {
+      setHistoryLoading(false);
+    }
   };
 
   // 搜索配置
@@ -315,10 +339,18 @@ const ConfigList: React.FC = () => {
     {
       title: '操作',
       key: 'action',
-      width: 150,
+      width: 200,
       fixed: 'right' as const,
       render: (_: any, record: ConfigItem) => (
         <Space size="small">
+          <Button
+            type="link"
+            size="small"
+            icon={<HistoryOutlined />}
+            onClick={() => handleShowHistory(record)}
+          >
+            历史
+          </Button>
           <Button
             type="link"
             size="small"
@@ -561,6 +593,62 @@ const ConfigList: React.FC = () => {
             </Space>
           </Form.Item>
         </Form>
+      </Modal>
+
+      {/* 变更历史弹窗 */}
+      <Modal
+        title={`变更历史 - ${historyKey || ''}`}
+        open={historyVisible}
+        onCancel={() => setHistoryVisible(false)}
+        footer={null}
+        width={700}
+      >
+        <Table
+          loading={historyLoading}
+          dataSource={historyRecords}
+          rowKey="id"
+          size="small"
+          pagination={{ pageSize: 10 }}
+          columns={[
+            {
+              title: '变更类型',
+              dataIndex: 'changeType',
+              width: 90,
+              render: (text: string) => {
+                const colorMap: Record<string, string> = {
+                  CREATE: 'green',
+                  UPDATE: 'blue',
+                  DELETE: 'red',
+                };
+                return <Tag color={colorMap[text] || 'default'}>{text}</Tag>;
+              },
+            },
+            {
+              title: '旧值',
+              dataIndex: 'oldValue',
+              ellipsis: true,
+              render: (text: string) => text || <span style={{ color: '#ccc' }}>-</span>,
+            },
+            {
+              title: '新值',
+              dataIndex: 'newValue',
+              ellipsis: true,
+              render: (text: string) => text || <span style={{ color: '#ccc' }}>-</span>,
+            },
+            {
+              title: '操作人',
+              dataIndex: 'operator',
+              width: 100,
+            },
+            {
+              title: '变更时间',
+              dataIndex: 'changeTime',
+              width: 160,
+              render: (text: string) => text ? new Date(text).toLocaleString() : '-',
+            },
+          ]}
+          locale={{ emptyText: '暂无变更记录' }}
+        />
       </Modal>
     </div>
   );

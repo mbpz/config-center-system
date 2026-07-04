@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
@@ -24,6 +25,7 @@ import java.util.List;
 
 @Configuration
 @EnableWebSecurity
+@EnableGlobalMethodSecurity(prePostEnabled = true)
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Value("${CC_ADMIN_PASSWORD:admin}")
@@ -63,6 +65,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers("/api/v1/health/**").permitAll()
                 // 认证相关端点允许匿名（登录接口本身不认证）
                 .antMatchers("/api/v1/auth/**").permitAll()
+                // 审计日志 → ADMIN 和 USER 都可读
+                .antMatchers("/api/v1/audit/**").hasAnyRole("ADMIN", "USER")
                 // 配置写操作（创建/更新/删除）→ 需要 ADMIN 角色
                 .antMatchers("/api/v1/configs/**").hasRole("ADMIN")
                 // 任何其他请求需要认证

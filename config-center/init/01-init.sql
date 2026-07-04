@@ -29,12 +29,15 @@ CREATE TABLE IF NOT EXISTS config_group (
 -- 配置变更记录表
 CREATE TABLE IF NOT EXISTS config_change_log (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    change_id VARCHAR(50) NOT NULL,
     config_key VARCHAR(100) NOT NULL,
+    environment VARCHAR(50) NOT NULL,
     old_value TEXT,
     new_value TEXT,
+    change_type VARCHAR(20) NOT NULL COMMENT 'CREATE/UPDATE/DELETE',
     operator VARCHAR(50) NOT NULL,
-    change_time DATETIME NOT NULL
+    change_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_key_env (config_key, environment),
+    INDEX idx_change_time (change_time)
 );
 
 -- Grant privileges to config_user
