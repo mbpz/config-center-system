@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2026 mbpz
 
-export default (initialState: API.UserInfo) => {
+export default (initialState: API.UserInfo | undefined) => {
   const roles = initialState?.roles || [];
 
   return {

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2026 mbpz
+
 import { defineConfig } from '@umijs/max';
 
 export default defineConfig({
@@ -7,7 +10,7 @@ export default defineConfig({
   initialState: {},
   request: {},
   layout: {
-    title: '配置中心',
+    title: 'Config Center',
   },
   proxy: {
     '/api': {
@@ -39,4 +42,6 @@ export default defineConfig({
     },
   ],
   npmClient: 'yarn',
+  // 错误边界
+  dva: {},
 });

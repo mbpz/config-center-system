@@ -17,3 +17,5 @@ config-center/.env
 
 # OS
 Thumbs.db
+config-web/dist
+config-web/src/.umi-production
