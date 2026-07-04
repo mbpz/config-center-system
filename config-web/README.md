@@ -2,19 +2,21 @@
 
 基于 UmiJS + Ant Design 的配置管理前端界面。
 
-## 功能特性
+> **当前状态**: v0.0.0 (pre-release) — 正在按 [Phase 1 信任层路线图](../ROADMAP.md) 改造中。
 
-- 📋 配置列表展示
-- 🔍 配置搜索功能
+---
+
+## 当前功能
+
+- 📋 配置列表展示（按环境筛选、按配置键搜索）
 - ➕ 新增配置
 - ✏️ 编辑配置
 - 🗑️ 删除配置
-- 🌍 多环境支持（开发、测试、生产）
-- 📊 系统状态监控
-- 🔄 实时刷新
-- 🗄️ 缓存管理
-- ⚡ 缓存刷新操作
-- 📈 Redis 状态监控
+- 🌍 多环境支持（dev / test / prod）
+- 📊 系统状态监控（健康检查、Redis 状态）
+- 🗄️ 缓存管理（缓存列表、按环境刷新、全量刷新）
+
+---
 
 ## 技术栈
 
@@ -24,136 +26,105 @@
 - TypeScript
 - Less
 
+---
+
 ## 开发环境
 
-### 环境要求
+### 前置条件
 
 - Node.js 16+
-- Yarn 或 npm
+- npm 或 Yarn
 
-### 安装依赖
+### 安装与启动
 
 ```bash
-yarn install
-# 或
+# 安装依赖
 npm install
-```
 
-### 启动开发服务器
-
-```bash
-yarn dev
-# 或
+# 启动开发服务器
 npm run dev
 ```
 
 访问 http://localhost:8000 查看应用。
 
+> 后端需运行在 http://localhost:8080，详见 [config-center/README.md](../config-center/README.md)。
+
 ### 构建生产版本
 
 ```bash
-yarn build
-# 或
 npm run build
 ```
+
+---
 
 ## 项目结构
 
 ```
 src/
-├── pages/           # 页面组件
-│   ├── Config/      # 配置管理页面
-│   └── Cache/       # 缓存管理页面
-├── services/        # API 服务
-│   └── config.ts    # 配置相关 API
-├── components/      # 公共组件
-├── models/          # 数据模型
-├── utils/           # 工具函数
-└── constants/       # 常量定义
+├── pages/              # 页面组件
+│   ├── Config/         # 配置管理页面（核心功能）
+│   └── Cache/          # 缓存监控页面
+├── services/           # API 服务
+│   └── config.ts       # 配置相关 API
+├── components/         # 公共组件
+│   └── Guide/          # 引导组件
+├── models/             # 数据模型
+├── utils/              # 工具函数
+├── constants/          # 常量定义
+├── access.ts           # 权限控制
+└── app.ts              # 运行时配置
 ```
+
+---
 
 ## API 接口
 
 ### 配置管理
 
-- `GET /api/v1/configs` - 获取配置列表
-- `GET /api/v1/configs/{key}` - 获取单个配置
-- `POST /api/v1/configs` - 创建配置
-- `PUT /api/v1/configs/{key}` - 更新配置
-- `DELETE /api/v1/configs/{key}` - 删除配置
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/api/v1/configs` | 获取配置列表 |
+| GET | `/api/v1/configs/{key}` | 获取单个配置 |
+| POST | `/api/v1/configs` | 创建配置 |
+| PUT | `/api/v1/configs/{key}` | 更新配置 |
+| DELETE | `/api/v1/configs/{key}` | 删除配置 |
 
 ### 健康检查
 
-- `GET /api/v1/health` - 系统健康状态
-- `GET /api/v1/health/redis` - Redis 健康状态
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/api/v1/health` | 系统健康状态 |
+| GET | `/api/v1/health/redis` | Redis 健康状态 |
+| GET | `/api/v1/health/cache/stats` | 缓存统计 |
+| GET | `/api/v1/health/cache/list` | 缓存列表 |
 
 ### 缓存管理
 
-- `POST /api/v1/health/cache/refresh/{environment}` - 刷新指定环境缓存
-- `POST /api/v1/health/cache/refresh` - 刷新所有环境缓存
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| POST | `/api/v1/health/cache/refresh/{environment}` | 刷新指定环境缓存 |
+| POST | `/api/v1/health/cache/refresh` | 刷新所有环境缓存 |
 
-## 使用说明
-
-### 配置管理
-
-1. **查看配置列表**：页面默认显示开发环境的配置列表
-2. **切换环境**：使用右上角的环境选择器切换不同环境
-3. **搜索配置**：使用搜索框按配置键搜索
-4. **新增配置**：点击"新增配置"按钮创建新配置
-5. **编辑配置**：点击表格中的"编辑"按钮修改配置
-6. **删除配置**：点击表格中的"删除"按钮删除配置
-7. **刷新数据**：点击"刷新"按钮重新加载数据
-
-### 缓存管理
-
-1. **查看缓存状态**：在配置管理页面点击"缓存管理"下拉菜单查看状态
-2. **刷新指定环境缓存**：选择对应环境进行缓存刷新
-3. **刷新所有环境缓存**：一键刷新所有环境的缓存
-4. **查看详细缓存信息**：访问专门的缓存管理页面查看详细信息
-
-### 缓存管理页面功能
-
-- **系统状态概览**：显示系统状态、Redis 状态、缓存策略等
-- **Redis 详细信息**：显示 Redis 连接状态和详细信息
-- **缓存操作**：提供各种缓存刷新操作
-- **缓存列表**：显示当前缓存的配置项
-- **操作日志**：记录缓存操作历史
+---
 
 ## 缓存策略
 
-- **三级缓存策略**：本地缓存 → Redis 缓存 → 数据库
-- **缓存过期时间**：Redis 缓存 1 小时，本地缓存 5 分钟
-- **缓存键格式**：config:配置键:环境
-- **自动降级**：Redis 不可用时自动降级到数据库
+- **三级缓存**: 本地缓存 (Caffeine) → Redis → MySQL
+- **本地缓存**: 5 分钟过期，最大 1000 条
+- **Redis 缓存**: 1 小时过期
+- **自动降级**: Redis 不可用时自动降级到数据库
+
+---
 
 ## 注意事项
 
-1. 确保后端服务在 `http://localhost:8080` 运行
-2. 确保数据库和 Redis 服务正常运行
-3. 不同环境的配置是独立的，切换环境时会显示对应环境的配置
-4. 缓存刷新操作会重新加载所有配置数据，可能需要一些时间
-5. 生产环境缓存刷新需要谨慎操作，建议在低峰期进行
+1. 确保后端服务在 http://localhost:8080 运行
+2. 确保 MySQL 和 Redis 服务正常运行
+3. 不同环境的配置是独立的
+4. 缓存刷新操作会重新加载所有配置数据
 
-## 开发指南
+---
 
-### 添加新页面
+## 许可证
 
-1. 在 `src/pages/` 下创建新的页面组件
-2. 在 `.umirc.ts` 中添加路由配置
-3. 在 `src/services/` 下添加对应的 API 服务
-
-### 修改样式
-
-项目使用 Less 作为样式预处理器，可以在组件中直接使用 Less 语法。
-
-### 添加新功能
-
-1. 在 `src/services/` 下添加新的 API 服务
-2. 在页面组件中调用 API
-3. 更新界面和交互逻辑
-
-### 缓存管理开发
-
-1. 在 `src/services/config.ts` 中添加缓存相关 API
-2. 在页面组件中实现缓存操作逻辑
-3. 添加缓存状态监控和错误处理
+[Apache License 2.0](../LICENSE)
