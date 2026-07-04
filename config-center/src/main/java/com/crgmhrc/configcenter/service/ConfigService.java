@@ -16,10 +16,13 @@ import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import org.slf4j.Logger;
+import com.crgmhrc.configcenter.config.ConfigChangeEvent;
+import io.micrometer.core.instrument.Counter;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -45,6 +48,9 @@ public class ConfigService {
 
     @Autowired(required = false)
     private MeterRegistry meterRegistry;
+
+    @Autowired(required = false)
+    private ApplicationEventPublisher eventPublisher;
 
     /**
      * 获取配置（三级缓存）
@@ -158,6 +164,10 @@ public class ConfigService {
                 null, shouldEncrypt ? "***ENCRYPTED***" : plainValue, "CREATE");
 
         logger.info("配置创建成功: key={}, environment={}", configItem.getConfigKey(), configItem.getEnvironment());
+
+        // 发布 SSE 事件
+        publishEvent(ConfigChangeEvent.Type.CREATED, configItem.getConfigKey(),
+                configItem.getEnvironment(), SecurityUtils.getCurrentUsername());
     }
 
     @Transactional
@@ -195,6 +205,10 @@ public class ConfigService {
                 "UPDATE");
 
         logger.info("配置更新成功: key={}, environment={}", configItem.getConfigKey(), configItem.getEnvironment());
+
+        // 发布 SSE 事件
+        publishEvent(ConfigChangeEvent.Type.UPDATED, configItem.getConfigKey(),
+                configItem.getEnvironment(), SecurityUtils.getCurrentUsername());
     }
 
     @Transactional
@@ -216,6 +230,18 @@ public class ConfigService {
                 null, "DELETE");
 
         logger.info("配置删除成功: key={}, environment={}", key, environment);
+
+        // 发布 SSE 事件
+        publishEvent(ConfigChangeEvent.Type.DELETED, key, environment, SecurityUtils.getCurrentUsername());
+    }
+
+    /**
+     * 发布配置变更事件 (异步, 供 SSE 和 Webhook 使用)
+     */
+    private void publishEvent(ConfigChangeEvent.Type type, String key, String env, String operator) {
+        if (eventPublisher != null) {
+            eventPublisher.publishEvent(new ConfigChangeEvent(type, key, env, operator));
+        }
     }
 
     /**
