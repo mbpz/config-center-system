@@ -56,13 +56,13 @@ class ConfigServiceTest {
         verify(cacheService).setToRedis("app.name", "dev", item);
         verify(auditMapper).insert(any());
         // 加密服务不应被调用
-        verify(encryptionService, never()).encrypt(any());
+        verify(encryptionService, never()).encrypt(any(), any());
     }
 
     @Test
     void createConfig_withEncrypted_encryptsValue() {
         ConfigItem item = createConfigItem("db.password", "secret123", true);
-        when(encryptionService.encrypt("secret123")).thenReturn("ENCRYPTED_SECRET");
+        when(encryptionService.encrypt("secret123", "dev")).thenReturn("ENCRYPTED_SECRET");
 
         configService.createConfig(item);
 
@@ -95,7 +95,7 @@ class ConfigServiceTest {
         ConfigItem oldItem = createConfigItem("db.password", "ENCRYPTED_OLD", true);
         ConfigItem newItem = createConfigItem("db.password", "new-secret", true);
         when(configItemMapper.findByKeyAndEnvironment("db.password", "dev")).thenReturn(oldItem);
-        when(encryptionService.encrypt("new-secret")).thenReturn("ENCRYPTED_NEW");
+        when(encryptionService.encrypt("new-secret", "dev")).thenReturn("ENCRYPTED_NEW");
 
         configService.updateConfig(newItem);
 

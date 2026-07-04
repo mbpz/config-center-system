@@ -42,8 +42,10 @@ CC_CORS_ALLOWED_ORIGINS: '*'
 
 # 加密配置
 # ⚠️ 生产环境必须设置！未设置时自动生成随机密钥（每次重启失效）
-# 注意: 使用 env.CC_MASTER_KEY 避免与自身循环引用
 CC_MASTER_KEY:
+# 自动加密的 key 模式 (Ant-style, 逗号分隔)
+# 匹配这些模式的 key 会自动加密存储，无需手动设置 encrypted=true
+CC_ENCRYPT_PATTERNS: "*.password,*.secret,*.token,*.apikey,*.private_key"
 
 # Actuator 端点配置
 management:

@@ -5,6 +5,7 @@
 
 package com.crgmhrc.configcenter.service;
 
+import com.crgmhrc.configcenter.config.EncryptionException;
 import com.crgmhrc.configcenter.config.EncryptionService;
 import com.crgmhrc.configcenter.entity.ConfigChangeLog;
 import com.crgmhrc.configcenter.entity.ConfigItem;
@@ -75,13 +76,14 @@ public class ConfigService {
             // L3: 数据库
             config = configItemMapper.findByKeyAndEnvironment(key, environment);
             if (config != null) {
-                // 解密处理
+                // 解密处理 (V2: 自动检测 provider)
                 if (Boolean.TRUE.equals(config.getEncrypted()) && config.getConfigValue() != null) {
                     try {
-                        String decrypted = encryptionService.decrypt(config.getConfigValue());
+                        String decrypted = encryptionService.decrypt(config.getConfigValue(), environment);
                         config.setConfigValue(decrypted);
-                    } catch (Exception e) {
-                        logger.error("配置解密失败: key={}, error={}", key, e.getMessage());
+                    } catch (EncryptionException e) {
+                        logger.error("配置解密失败: key={}, provider={}, error={}",
+                                key, encryptionService.getPrimaryProviderName(), e.getMessage());
                     }
                 }
                 cacheService.setToRedis(key, environment, config);
@@ -135,10 +137,14 @@ public class ConfigService {
         logger.info("创建新配置: key={}, environment={}, encrypted={}",
                 configItem.getConfigKey(), configItem.getEnvironment(), configItem.getEncrypted());
 
-        // 加密处理
+        // V2 加密处理: 支持自动加密 (按 key 模式) + 显式 encrypted 标记
         String plainValue = configItem.getConfigValue();
-        if (Boolean.TRUE.equals(configItem.getEncrypted()) && plainValue != null) {
-            configItem.setConfigValue(encryptionService.encrypt(plainValue));
+        boolean shouldEncrypt = Boolean.TRUE.equals(configItem.getEncrypted())
+                || (plainValue != null && encryptionService.shouldAutoEncrypt(configItem.getConfigKey()));
+
+        if (shouldEncrypt && plainValue != null) {
+            configItem.setEncrypted(true);
+            configItem.setConfigValue(encryptionService.encrypt(plainValue, configItem.getEnvironment()));
         }
 
         configItemMapper.insert(configItem);
@@ -149,7 +155,7 @@ public class ConfigService {
 
         // 写入审计日志（审计中不记录明文值，标记为 ***）
         recordAudit(configItem.getConfigKey(), configItem.getEnvironment(),
-                null, Boolean.TRUE.equals(configItem.getEncrypted()) ? "***ENCRYPTED***" : plainValue, "CREATE");
+                null, shouldEncrypt ? "***ENCRYPTED***" : plainValue, "CREATE");
 
         logger.info("配置创建成功: key={}, environment={}", configItem.getConfigKey(), configItem.getEnvironment());
     }
@@ -166,10 +172,14 @@ public class ConfigService {
         String oldValue = oldConfig != null ? oldConfig.getConfigValue() : null;
         boolean wasEncrypted = oldConfig != null && Boolean.TRUE.equals(oldConfig.getEncrypted());
 
-        // 加密处理
+        // V2 加密处理
         String plainValue = configItem.getConfigValue();
-        if (Boolean.TRUE.equals(configItem.getEncrypted()) && plainValue != null) {
-            configItem.setConfigValue(encryptionService.encrypt(plainValue));
+        boolean shouldEncrypt = Boolean.TRUE.equals(configItem.getEncrypted())
+                || (plainValue != null && encryptionService.shouldAutoEncrypt(configItem.getConfigKey()));
+
+        if (shouldEncrypt && plainValue != null) {
+            configItem.setEncrypted(true);
+            configItem.setConfigValue(encryptionService.encrypt(plainValue, configItem.getEnvironment()));
         }
 
         configItemMapper.update(configItem);
@@ -181,7 +191,7 @@ public class ConfigService {
         // 写入审计日志
         recordAudit(configItem.getConfigKey(), configItem.getEnvironment(),
                 wasEncrypted ? "***ENCRYPTED***" : oldValue,
-                Boolean.TRUE.equals(configItem.getEncrypted()) ? "***ENCRYPTED***" : plainValue,
+                shouldEncrypt ? "***ENCRYPTED***" : plainValue,
                 "UPDATE");
 
         logger.info("配置更新成功: key={}, environment={}", configItem.getConfigKey(), configItem.getEnvironment());
