@@ -304,7 +304,8 @@ docker run -d -p 8080:8080 \
   dougzeng/config-center:v0.3.0
 ```
 
-> 📖 完整部署指南 (Docker Compose / K8s / 环境变量参考): [docs/DEPLOY.md](docs/DEPLOY.md)
+> 📖 完整部署指南: [docs/DEPLOY.md](docs/DEPLOY.md)
+> 📖 构建与 CI 指南: [docs/BUILD.md](docs/BUILD.md)
 
 ---
 
@@ -342,10 +343,13 @@ config-center-system/
 │   └── package.json
 ├── docs/
 │   ├── DEPLOY.md                   # 🚀 部署指南
+│   ├── BUILD.md                    # 🔨 构建与 CI 指南
 │   ├── PRD-trust-first.md          # 产品需求文档
 │   ├── design.md                   # 架构设计文档
 │   ├── sdk/README.md               # SDK 设计文档
 │   └── operator/README.md          # K8s Operator 设计文档
+├── build.sh                        # 本地构建脚本
+└── verify.sh                       # 验证构建结果
 ├── .github/                        # GitHub 配置
 │   ├── workflows/                  # CI/CD (ci.yml, release.yml)
 │   ├── ISSUE_TEMPLATE/             # Issue 模板
