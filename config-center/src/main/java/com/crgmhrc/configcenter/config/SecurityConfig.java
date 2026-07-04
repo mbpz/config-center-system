@@ -73,6 +73,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 // 配置分组 → 读取 ADMIN/USER, 写入 ADMIN
                 .antMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/groups/**").hasAnyRole("ADMIN", "USER")
                 .antMatchers("/api/v1/groups/**").hasRole("ADMIN")
+                // 灰度发布 → 读取 ADMIN/USER, 写入 ADMIN
+                .antMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/gray-releases/**").hasAnyRole("ADMIN", "USER")
+                .antMatchers("/api/v1/gray-releases/**").hasRole("ADMIN")
                 // 配置写操作（创建/更新/删除/导入/导出）→ 需要 ADMIN 角色
                 .antMatchers("/api/v1/configs/**").hasRole("ADMIN")
                 // 任何其他请求需要认证

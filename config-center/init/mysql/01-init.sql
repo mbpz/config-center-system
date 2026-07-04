@@ -45,7 +45,23 @@ CREATE TABLE IF NOT EXISTS config_change_log (
     INDEX idx_change_time (change_time)
 );
 
--- 创建用户并授权（使用root用户执行）
-CREATE USER IF NOT EXISTS 'config_user'@'%' IDENTIFIED BY 'config123';
-GRANT ALL PRIVILEGES ON config_center.* TO 'config_user'@'%';
-FLUSH PRIVILEGES; 
+-- 灰度发布策略表
+CREATE TABLE IF NOT EXISTS config_gray_release (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    config_key VARCHAR(100) NOT NULL,
+    environment VARCHAR(50) NOT NULL,
+    strategy_type VARCHAR(20) NOT NULL COMMENT 'PERCENTAGE or TAG',
+    strategy_detail TEXT NOT NULL COMMENT 'JSON strategy config',
+    gray_value TEXT COMMENT '灰度分流后的值',
+    enabled BOOLEAN DEFAULT TRUE,
+    operator VARCHAR(50) NOT NULL,
+    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_key_env (config_key, environment),
+    INDEX idx_enabled (enabled)
+);
+
+-- Phase 2: 移除硬编码密码，应用通过环境变量配置
+-- 首次部署执行: CREATE USER 'config_user'@'%' IDENTIFIED BY '随机强密码';
+-- GRANT ALL PRIVILEGES ON config_center.* TO 'config_user'@'%';
+-- FLUSH PRIVILEGES; 
