@@ -39,6 +39,9 @@ CC_ADMIN_PASSWORD: ${CC_ADMIN_PASSWORD:dev_admin}
 CC_USER_PASSWORD: ${CC_USER_PASSWORD:dev_user}
 CC_CORS_ALLOWED_ORIGINS: ${CC_CORS_ALLOWED_ORIGINS:*}
 
+# 加密配置（开发环境使用固定密钥便于测试）
+CC_MASTER_KEY: ${CC_MASTER_KEY:dev_master_key_do_not_use_in_production}
+
 logging:
   level:
     root: INFO

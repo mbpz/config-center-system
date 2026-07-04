@@ -39,6 +39,10 @@ CC_ADMIN_PASSWORD: ${CC_ADMIN_PASSWORD:}
 CC_USER_PASSWORD: ${CC_USER_PASSWORD:}
 CC_CORS_ALLOWED_ORIGINS: ${CC_CORS_ALLOWED_ORIGINS:*}
 
+# 加密配置
+# ⚠️ 生产环境必须设置！未设置时自动生成随机密钥（每次重启失效）
+CC_MASTER_KEY: ${CC_MASTER_KEY:}
+
 logging:
   level:
     root: INFO

@@ -5,6 +5,7 @@
 
 package com.crgmhrc.configcenter.service;
 
+import com.crgmhrc.configcenter.config.EncryptionService;
 import com.crgmhrc.configcenter.entity.ConfigChangeLog;
 import com.crgmhrc.configcenter.entity.ConfigItem;
 import com.crgmhrc.configcenter.mapper.AuditMapper;
@@ -34,6 +35,9 @@ public class ConfigService {
     @Autowired
     private CacheService cacheService;
 
+    @Autowired
+    private EncryptionService encryptionService;
+
     /**
      * 获取配置（三级缓存）
      * 1. 本地缓存（Caffeine）
@@ -55,25 +59,53 @@ public class ConfigService {
 
         config = configItemMapper.findByKeyAndEnvironment(key, environment);
         if (config != null) {
+            // 解密处理
+            if (Boolean.TRUE.equals(config.getEncrypted()) && config.getConfigValue() != null) {
+                try {
+                    String decrypted = encryptionService.decrypt(config.getConfigValue());
+                    config.setConfigValue(decrypted);
+                } catch (Exception e) {
+                    logger.error("配置解密失败: key={}, error={}", key, e.getMessage());
+                    // 解密失败时返回原始密文，前端会显示错误提示
+                }
+            }
             cacheService.setToRedis(key, environment, config);
         }
         return config;
     }
 
     public List<ConfigItem> getConfigsByEnvironment(String environment) {
-        return configItemMapper.findByEnvironment(environment);
+        List<ConfigItem> configs = configItemMapper.findByEnvironment(environment);
+        // 列表中不解密值，只标记为已加密（前端显示 ****）
+        for (ConfigItem config : configs) {
+            if (Boolean.TRUE.equals(config.getEncrypted()) && config.getConfigValue() != null) {
+                config.getConfigValue(); // 不做解密操作
+            }
+        }
+        return configs;
     }
 
     @Transactional
     @CacheEvict(value = "localCache", key = "#configItem.configKey + ':' + #configItem.environment")
     public void createConfig(ConfigItem configItem) {
-        logger.info("创建新配置: key={}, environment={}", configItem.getConfigKey(), configItem.getEnvironment());
-        configItemMapper.insert(configItem);
-        cacheService.setToRedis(configItem.getConfigKey(), configItem.getEnvironment(), configItem);
+        logger.info("创建新配置: key={}, environment={}, encrypted={}",
+                configItem.getConfigKey(), configItem.getEnvironment(), configItem.getEncrypted());
 
-        // 写入审计日志
+        // 加密处理
+        String plainValue = configItem.getConfigValue();
+        if (Boolean.TRUE.equals(configItem.getEncrypted()) && plainValue != null) {
+            configItem.setConfigValue(encryptionService.encrypt(plainValue));
+        }
+
+        configItemMapper.insert(configItem);
+        // 缓存中存储明文（解密后的值）
+        ConfigItem cacheItem = copyConfigItem(configItem);
+        cacheItem.setConfigValue(plainValue);
+        cacheService.setToRedis(configItem.getConfigKey(), configItem.getEnvironment(), cacheItem);
+
+        // 写入审计日志（审计中不记录明文值，标记为 ***）
         recordAudit(configItem.getConfigKey(), configItem.getEnvironment(),
-                null, configItem.getConfigValue(), "CREATE");
+                null, Boolean.TRUE.equals(configItem.getEncrypted()) ? "***ENCRYPTED***" : plainValue, "CREATE");
 
         logger.info("配置创建成功: key={}, environment={}", configItem.getConfigKey(), configItem.getEnvironment());
     }
@@ -81,19 +113,32 @@ public class ConfigService {
     @Transactional
     @CacheEvict(value = "localCache", key = "#configItem.configKey + ':' + #configItem.environment")
     public void updateConfig(ConfigItem configItem) {
-        logger.info("更新配置: key={}, environment={}", configItem.getConfigKey(), configItem.getEnvironment());
+        logger.info("更新配置: key={}, environment={}, encrypted={}",
+                configItem.getConfigKey(), configItem.getEnvironment(), configItem.getEncrypted());
 
         // 获取旧值用于审计
         ConfigItem oldConfig = configItemMapper.findByKeyAndEnvironment(
                 configItem.getConfigKey(), configItem.getEnvironment());
         String oldValue = oldConfig != null ? oldConfig.getConfigValue() : null;
+        boolean wasEncrypted = oldConfig != null && Boolean.TRUE.equals(oldConfig.getEncrypted());
+
+        // 加密处理
+        String plainValue = configItem.getConfigValue();
+        if (Boolean.TRUE.equals(configItem.getEncrypted()) && plainValue != null) {
+            configItem.setConfigValue(encryptionService.encrypt(plainValue));
+        }
 
         configItemMapper.update(configItem);
-        cacheService.setToRedis(configItem.getConfigKey(), configItem.getEnvironment(), configItem);
+        // 缓存中存储明文
+        ConfigItem cacheItem = copyConfigItem(configItem);
+        cacheItem.setConfigValue(plainValue);
+        cacheService.setToRedis(configItem.getConfigKey(), configItem.getEnvironment(), cacheItem);
 
         // 写入审计日志
         recordAudit(configItem.getConfigKey(), configItem.getEnvironment(),
-                oldValue, configItem.getConfigValue(), "UPDATE");
+                wasEncrypted ? "***ENCRYPTED***" : oldValue,
+                Boolean.TRUE.equals(configItem.getEncrypted()) ? "***ENCRYPTED***" : plainValue,
+                "UPDATE");
 
         logger.info("配置更新成功: key={}, environment={}", configItem.getConfigKey(), configItem.getEnvironment());
     }
@@ -106,14 +151,35 @@ public class ConfigService {
         // 获取旧值用于审计
         ConfigItem oldConfig = configItemMapper.findByKeyAndEnvironment(key, environment);
         String oldValue = oldConfig != null ? oldConfig.getConfigValue() : null;
+        boolean wasEncrypted = oldConfig != null && Boolean.TRUE.equals(oldConfig.getEncrypted());
 
         configItemMapper.delete(key, environment);
         cacheService.removeFromRedis(key, environment);
 
         // 写入审计日志
-        recordAudit(key, environment, oldValue, null, "DELETE");
+        recordAudit(key, environment,
+                wasEncrypted ? "***ENCRYPTED***" : oldValue,
+                null, "DELETE");
 
         logger.info("配置删除成功: key={}, environment={}", key, environment);
+    }
+
+    /**
+     * 复制 ConfigItem（用于缓存场景）
+     */
+    private ConfigItem copyConfigItem(ConfigItem source) {
+        ConfigItem copy = new ConfigItem();
+        copy.setId(source.getId());
+        copy.setConfigKey(source.getConfigKey());
+        copy.setConfigValue(source.getConfigValue());
+        copy.setDescription(source.getDescription());
+        copy.setEnvironment(source.getEnvironment());
+        copy.setVersion(source.getVersion());
+        copy.setStatus(source.getStatus());
+        copy.setEncrypted(source.getEncrypted());
+        copy.setCreateTime(source.getCreateTime());
+        copy.setUpdateTime(source.getUpdateTime());
+        return copy;
     }
 
     /**

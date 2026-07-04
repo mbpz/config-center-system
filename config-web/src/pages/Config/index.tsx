@@ -30,6 +30,7 @@ import {
   Badge,
   Button,
   Card,
+  Checkbox,
   Col,
   Dropdown,
   Form,
@@ -285,11 +286,20 @@ const ConfigList: React.FC = () => {
       key: 'configValue',
       width: 300,
       ellipsis: true,
-      render: (text: string) => (
-        <Tooltip title={text}>
-          <span>{text}</span>
-        </Tooltip>
-      ),
+      render: (text: string, record: ConfigItem) => {
+        if (record.encrypted) {
+          return (
+            <Tooltip title="已加密存储，点击编辑查看详情">
+              <Tag color="orange">🔒 ****</Tag>
+            </Tooltip>
+          );
+        }
+        return (
+          <Tooltip title={text}>
+            <span>{text}</span>
+          </Tooltip>
+        );
+      },
     },
     {
       title: '描述',
@@ -547,6 +557,15 @@ const ConfigList: React.FC = () => {
             rules={[{ required: true, message: '请输入配置值' }]}
           >
             <TextArea rows={3} placeholder="请输入配置值" />
+          </Form.Item>
+
+          <Form.Item
+            name="encrypted"
+            label="加密存储"
+            valuePropName="checked"
+            extra="启用后，配置值将在数据库中加密存储（AES-256-GCM）。敏感信息（密码、token）建议启用。"
+          >
+            <Checkbox defaultChecked={false}>加密此配置值</Checkbox>
           </Form.Item>
 
           <Form.Item
