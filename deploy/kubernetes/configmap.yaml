@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config-center
+  labels:
+    app: config-center
+data:
+  # 应用配置文件路径
+  SPRING_PROFILES_ACTIVE: "prod"
+  SERVER_PORT: "8080"
+  # ⚠️ 修改以下值为你的实际数据库和Redis地址
+  SPRING_DATASOURCE_URL: "jdbc:mysql://mysql-service:3306/config_center?useSSL=true&serverTimezone=UTC"
+  SPRING_DATASOURCE_USERNAME: "config_user"
+  SPRING_REDIS_HOST: "redis-service"
+  SPRING_REDIS_PORT: "6379"
+  CC_CORS_ALLOWED_ORIGINS: "*"

@@ -1,0 +1,20 @@
+apiVersion: v2
+name: config-center
+description: A lightweight, secure configuration center for private deployment
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - config-center
+  - configuration
+  - spring-boot
+  - java
+home: https://github.com/mbpz/config-center-system
+sources:
+  - https://github.com/mbpz/config-center-system
+maintainers:
+  - name: mbpz
+    email: apples398@163.com
+icon: https://raw.githubusercontent.com/mbpz/config-center-system/main/docs/icon.png
+annotations:
+  category: Infrastructure

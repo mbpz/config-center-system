@@ -1,0 +1,27 @@
+╔══════════════════════════════════════════════════════════════╗
+║  Config Center 部署成功!                                     ║
+╚══════════════════════════════════════════════════════════════╝
+
+1. 查看 Pod 状态:
+   kubectl get pods -l app.kubernetes.io/name={{ include "config-center.name" . }}
+
+2. 端口转发到本地:
+   kubectl port-forward svc/{{ include "config-center.fullname" . }} 8080:8080
+
+3. 访问应用:
+   open http://localhost:8080
+
+4. 查看日志:
+   kubectl logs -l app.kubernetes.io/name={{ include "config-center.name" . }} -f
+
+5. 健康检查:
+   curl http://localhost:8080/api/v1/health
+
+⚠️  安全提醒:
+   - 默认密码已设置，请在生产环境前修改
+   - 查看 Secret: kubectl get secret {{ include "config-center.fullname" . }} -o yaml
+   - 修改密码后重启 Pod: kubectl rollout restart deployment/{{ include "config-center.fullname" . }}
+
+📊 Prometheus 指标:
+   - 端点: http://localhost:8080/actuator/prometheus
+   - 关键指标: config_read_seconds, cache_hit_total, redis_available

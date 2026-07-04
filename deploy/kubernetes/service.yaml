@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: config-center
+  labels:
+    app: config-center
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8080
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app: config-center
+---
+# 如果需要外部访问，使用以下 Ingress（需要 Ingress Controller）
+# apiVersion: networking.k8s.io/v1
+# kind: Ingress
+# metadata:
+#   name: config-center
+#   annotations:
+#     nginx.ingress.kubernetes.io/rewrite-target: /
+# spec:
+#   rules:
+#     - host: config-center.example.com
+#       http:
+#         paths:
+#           - path: /
+#             pathType: Prefix
+#             backend:
+#               service:
+#                 name: config-center
+#                 port:
+#                   number: 8080

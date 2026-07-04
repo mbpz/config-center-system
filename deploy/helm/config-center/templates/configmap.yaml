@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "config-center.fullname" . }}
+  labels:
+    {{- include "config-center.labels" . | nindent 4 }}
+data:
+  SPRING_PROFILES_ACTIVE: {{ .Values.config.profilesActive | quote }}
+  SERVER_PORT: {{ .Values.config.serverPort | quote }}
+  SPRING_DATASOURCE_URL: {{ .Values.config.datasource.url | quote }}
+  SPRING_DATASOURCE_USERNAME: {{ .Values.config.datasource.username | quote }}
+  SPRING_REDIS_HOST: {{ .Values.config.redis.host | quote }}
+  SPRING_REDIS_PORT: {{ .Values.config.redis.port | quote }}
+  CC_CORS_ALLOWED_ORIGINS: {{ .Values.config.security.corsAllowedOrigins | quote }}

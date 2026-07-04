@@ -11,6 +11,9 @@ import com.crgmhrc.configcenter.entity.ConfigItem;
 import com.crgmhrc.configcenter.mapper.AuditMapper;
 import com.crgmhrc.configcenter.mapper.ConfigItemMapper;
 import com.crgmhrc.configcenter.security.SecurityUtils;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class ConfigService {
@@ -38,6 +42,9 @@ public class ConfigService {
     @Autowired
     private EncryptionService encryptionService;
 
+    @Autowired(required = false)
+    private MeterRegistry meterRegistry;
+
     /**
      * 获取配置（三级缓存）
      * 1. 本地缓存（Caffeine）
@@ -47,31 +54,68 @@ public class ConfigService {
     public ConfigItem getConfig(String key, String environment) {
         logger.debug("开始获取配置: key={}, environment={}", key, environment);
 
-        ConfigItem config = cacheService.getFromLocalCache(key, environment);
-        if (config != null) {
-            return config;
-        }
+        long start = System.nanoTime();
+        String cacheLayer = "miss";
 
-        config = cacheService.getFromRedis(key, environment);
-        if (config != null) {
-            return config;
-        }
-
-        config = configItemMapper.findByKeyAndEnvironment(key, environment);
-        if (config != null) {
-            // 解密处理
-            if (Boolean.TRUE.equals(config.getEncrypted()) && config.getConfigValue() != null) {
-                try {
-                    String decrypted = encryptionService.decrypt(config.getConfigValue());
-                    config.setConfigValue(decrypted);
-                } catch (Exception e) {
-                    logger.error("配置解密失败: key={}, error={}", key, e.getMessage());
-                    // 解密失败时返回原始密文，前端会显示错误提示
-                }
+        try {
+            // L1: 本地缓存
+            ConfigItem config = cacheService.getFromLocalCache(key, environment);
+            if (config != null) {
+                cacheLayer = "local";
+                return config;
             }
-            cacheService.setToRedis(key, environment, config);
+
+            // L2: Redis
+            config = cacheService.getFromRedis(key, environment);
+            if (config != null) {
+                cacheLayer = "redis";
+                return config;
+            }
+
+            // L3: 数据库
+            config = configItemMapper.findByKeyAndEnvironment(key, environment);
+            if (config != null) {
+                // 解密处理
+                if (Boolean.TRUE.equals(config.getEncrypted()) && config.getConfigValue() != null) {
+                    try {
+                        String decrypted = encryptionService.decrypt(config.getConfigValue());
+                        config.setConfigValue(decrypted);
+                    } catch (Exception e) {
+                        logger.error("配置解密失败: key={}, error={}", key, e.getMessage());
+                    }
+                }
+                cacheService.setToRedis(key, environment, config);
+            }
+            return config;
+        } finally {
+            recordMetrics(cacheLayer, System.nanoTime() - start);
         }
-        return config;
+    }
+
+    /**
+     * 记录 Prometheus 指标
+     */
+    private void recordMetrics(String cacheLayer, long durationNanos) {
+        if (meterRegistry == null) return;
+        try {
+            Timer.builder("config_read")
+                    .tag("cache_layer", cacheLayer)
+                    .register(meterRegistry)
+                    .record(durationNanos, TimeUnit.NANOSECONDS);
+
+            if ("miss".equals(cacheLayer)) {
+                Counter.builder("cache_miss_total")
+                        .register(meterRegistry)
+                        .increment();
+            } else {
+                Counter.builder("cache_hit_total")
+                        .tag("layer", cacheLayer)
+                        .register(meterRegistry)
+                        .increment();
+            }
+        } catch (Exception e) {
+            logger.debug("指标记录失败: {}", e.getMessage());
+        }
     }
 
     public List<ConfigItem> getConfigsByEnvironment(String environment) {

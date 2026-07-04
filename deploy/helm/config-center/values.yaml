@@ -1,0 +1,87 @@
+# Config Center Helm Chart - 默认值
+
+replicaCount: 1
+
+image:
+  repository: ghcr.io/mbpz/config-center
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "8080"
+  prometheus.io/path: "/actuator/prometheus"
+
+podSecurityContext: {}
+securityContext: {}
+
+service:
+  type: ClusterIP
+  port: 8080
+
+ingress:
+  enabled: false
+  className: "nginx"
+  annotations: {}
+  hosts:
+    - host: config-center.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+# 应用配置
+config:
+  serverPort: 8080
+  profilesActive: "prod"
+  datasource:
+    url: "jdbc:mysql://mysql:3306/config_center?useSSL=true&serverTimezone=UTC"
+    username: "config_user"
+    password: "CHANGE_ME"
+  redis:
+    host: "redis"
+    port: 6379
+    password: "CHANGE_ME"
+  security:
+    adminPassword: "CHANGE_ME_ADMIN"
+    userPassword: "CHANGE_ME_USER"
+    corsAllowedOrigins: "*"
+  encryption:
+    masterKey: "CHANGE_ME_16_CHARS_MIN"
+
+# Prometheus ServiceMonitor
+prometheus:
+  enabled: false
+  serviceMonitor:
+    enabled: false
+    interval: 30s
+    scrapeTimeout: 10s
+    labels: {}

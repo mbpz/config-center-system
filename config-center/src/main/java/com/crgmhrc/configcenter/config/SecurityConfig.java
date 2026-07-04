@@ -61,7 +61,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
             .and()
             .authorizeRequests()
-                // 健康检查端点允许匿名
+                // Actuator 端点: health 公开, prometheus 公开(供采集), 其他需授权
+                .antMatchers("/actuator/health", "/actuator/info", "/actuator/prometheus").permitAll()
+                .antMatchers("/actuator/**").hasRole("ADMIN")
+                // API 健康检查端点允许匿名
                 .antMatchers("/api/v1/health/**").permitAll()
                 // 认证相关端点允许匿名（登录接口本身不认证）
                 .antMatchers("/api/v1/auth/**").permitAll()
