@@ -1,3 +1,5 @@
+/*n * SPDX-License-Identifier: Apache-2.0n * Copyright 2026 mbpzn */
+
 package com.crgmhrc.configcenter.config;
 
 import com.github.benmanes.caffeine.cache.Caffeine;

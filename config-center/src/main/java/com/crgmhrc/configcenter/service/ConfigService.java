@@ -1,3 +1,5 @@
+/*n * SPDX-License-Identifier: Apache-2.0n * Copyright 2026 mbpzn */
+
 package com.crgmhrc.configcenter.service;
 
 import com.crgmhrc.configcenter.entity.ConfigItem;

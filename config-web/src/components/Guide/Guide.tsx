@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0n// Copyright 2026 mbpz
+
 import { Layout, Row, Typography } from 'antd';
 import React from 'react';
 import styles from './Guide.less';

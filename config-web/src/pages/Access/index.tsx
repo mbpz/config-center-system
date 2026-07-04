@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0n// Copyright 2026 mbpz
+
 import { PageContainer } from '@ant-design/pro-components';
 import { Access, useAccess } from '@umijs/max';
 import { Button } from 'antd';

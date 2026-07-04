@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0n// Copyright 2026 mbpz
+
 import { Modal } from 'antd';
 import React, { PropsWithChildren } from 'react';
 
