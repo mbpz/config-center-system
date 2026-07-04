@@ -17,6 +17,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import org.slf4j.Logger;
 import com.crgmhrc.configcenter.config.ConfigChangeEvent;
+import com.crgmhrc.configcenter.security.TenantContext;
 import io.micrometer.core.instrument.Counter;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -142,6 +143,11 @@ public class ConfigService {
     public void createConfig(ConfigItem configItem) {
         logger.info("创建新配置: key={}, environment={}, encrypted={}",
                 configItem.getConfigKey(), configItem.getEnvironment(), configItem.getEncrypted());
+
+        // 多租户: 自动注入当前租户 ID
+        if (configItem.getTenantId() == null || configItem.getTenantId().isEmpty()) {
+            configItem.setTenantId(TenantContext.getCurrentTenant());
+        }
 
         // V2 加密处理: 支持自动加密 (按 key 模式) + 显式 encrypted 标记
         String plainValue = configItem.getConfigValue();

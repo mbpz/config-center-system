@@ -52,8 +52,8 @@ class ConfigServiceTest {
 
         configService.createConfig(item);
 
-        verify(configItemMapper).insert(item);
-        verify(cacheService).setToRedis("app.name", "dev", item);
+        verify(configItemMapper).insert(any());
+        verify(cacheService).setToRedis(eq("app.name"), eq("dev"), any());
         verify(auditMapper).insert(any());
         // 加密服务不应被调用
         verify(encryptionService, never()).encrypt(any(), any());

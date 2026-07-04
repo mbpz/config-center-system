@@ -13,9 +13,12 @@ CREATE TABLE IF NOT EXISTS config_item (
     environment VARCHAR(50) NOT NULL,
     version VARCHAR(50) NOT NULL,
     status VARCHAR(20) NOT NULL,
+    encrypted BOOLEAN DEFAULT FALSE,
+    tenant_id VARCHAR(50) NOT NULL DEFAULT 'default',
     create_time DATETIME NOT NULL,
     update_time DATETIME NOT NULL,
-    UNIQUE KEY uk_key_env (config_key, environment)
+    UNIQUE KEY uk_key_env_tenant (config_key, environment, tenant_id),
+    INDEX idx_tenant (tenant_id)
 );
 
 -- 创建配置组表
