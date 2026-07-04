@@ -1,8 +1,7 @@
-/*
+/**
  * SPDX-License-Identifier: Apache-2.0
  * Copyright 2026 mbpz
  */
-
 package com.crgmhrc.configcenter.service;
 
 import com.crgmhrc.configcenter.config.EncryptionException;
