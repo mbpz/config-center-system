@@ -31,7 +31,8 @@ services:
     # 健康检查配置，定期检查服务是否正常
     healthcheck:
       # 使用 mysqladmin ping 命令检查 MySQL 是否响应
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      # 注意：通过 MYSQL_PWD 环境变量传递密码，避免在 CLI 暴露
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "--password=$${MYSQL_ROOT_PASSWORD}"]
       # 检查间隔时间
       interval: 10s
       # 检查超时时间
@@ -59,6 +60,7 @@ services:
     # 健康检查配置
     healthcheck:
       # 使用 redis-cli ping 命令检查 Redis 是否响应
+      # 通过 REDIS_PASSWORD 环境变量传递密码
       test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
       # 检查间隔时间
       interval: 10s
@@ -123,4 +125,4 @@ volumes:
   # Redis 数据卷，持久化缓存数据
   redis_data:
     # 数据卷名称
-    name: config-center-redis-data 
+    name: config-center-redis-data

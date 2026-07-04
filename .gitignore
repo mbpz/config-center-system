@@ -3,3 +3,17 @@ config-web/package-lock.json
 config-web/node_modules
 config-web/src/.umi
 config-center/target
+
+# Environment variables — never commit real credentials
+config-center/.env
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+Thumbs.db

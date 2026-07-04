@@ -6,37 +6,67 @@ services:
     image: config-center:latest
     container_name: config-center
     ports:
-      - "8080:8080"
+      - "${SERVER_PORT:-8080}:8080"
     environment:
-      # MySQL 连接信息（请根据实际情况修改）
-      SPRING_DATASOURCE_URL: jdbc:mysql://your-mysql-host:3306/your_db?useSSL=false&serverTimezone=UTC
-      SPRING_DATASOURCE_USERNAME: your_mysql_user
-      SPRING_DATASOURCE_PASSWORD: your_mysql_password
-      # Redis 连接信息（请根据实际情况修改）
-      SPRING_REDIS_HOST: your-redis-host
-      SPRING_REDIS_PORT: 6379
+      # MySQL 连接信息（请通过 .env 或环境变量传入）
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+      # Redis 连接信息（请通过 .env 或环境变量传入）
+      SPRING_REDIS_HOST: ${SPRING_REDIS_HOST}
+      SPRING_REDIS_PORT: ${SPRING_REDIS_PORT:-6379}
+      SPRING_REDIS_PASSWORD: ${SPRING_REDIS_PASSWORD}
+    env_file:
+      - .env
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
 
   mysql:
     image: mysql:8.0
-    container_name: mysql
+    container_name: config-center-mysql
     environment:
-      MYSQL_ROOT_PASSWORD: yourpassword
-      MYSQL_DATABASE: your_db
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-config_center}
+      MYSQL_USER: ${MYSQL_USER:-config_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     ports:
-      - "3306:3306"
+      - "${MYSQL_PORT:-3306}:3306"
     volumes:
+      - mysql_data:/var/lib/mysql
       - ./init/mysql:/docker-entrypoint-initdb.d
+    command: --bind-address=0.0.0.0 --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "--password=$${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
 
   redis:
     image: redis:7.2
-    container_name: redis
+    container_name: config-center-redis
+    command: redis-server --requirepass ${REDIS_PASSWORD} --appendonly yes --bind 0.0.0.0
     ports:
-      - "6379:6379"
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
 
 volumes:
-  mysql-data:
-  redis-data:
+  mysql_data:
+    name: config-center-mysql-data
+  redis_data:
+    name: config-center-redis-data
 
 networks:
-  config-network:
-    driver: bridge 
+  default:
+    name: config-center-network

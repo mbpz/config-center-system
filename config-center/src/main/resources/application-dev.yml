@@ -3,15 +3,15 @@ spring:
     name: config-center
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://192.168.3.181:3306/config_center?useSSL=false&serverTimezone=UTC
-    username: root
-    password: mysql_ZJHZsF
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/config_center?useSSL=false&serverTimezone=UTC}
+    username: ${SPRING_DATASOURCE_USERNAME:config_user}
+    password: ${SPRING_DATASOURCE_PASSWORD:dev_password}
   redis:
     enabled: true  # Redis开关，设为false时禁用Redis缓存
-    host: 192.168.3.181
-    port: 6379
-    password: redis_T2G6Yh
-    database: 0
+    host: ${SPRING_REDIS_HOST:localhost}
+    port: ${SPRING_REDIS_PORT:6379}
+    password: ${SPRING_REDIS_PASSWORD:dev_redis}
+    database: ${SPRING_REDIS_DATABASE:0}
     timeout: 10000
     client-type: lettuce
     lettuce:
@@ -27,17 +27,16 @@ spring:
 
 mybatis:
   mapper-locations: classpath:mapper/*.xml
-  type-aliases-package: com.example.configcenter.entity
+  type-aliases-package: com.crgmhrc.configcenter.entity
   configuration:
     map-underscore-to-camel-case: true
-    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
 
 server:
-  port: 8080
+  port: ${SERVER_PORT:8080}
 
 logging:
   level:
     root: INFO
-    com.example.configcenter: DEBUG
+    com.crgmhrc.configcenter: DEBUG
     org.springframework.cache: DEBUG
-    org.springframework.data.redis: DEBUG 
+    org.springframework.data.redis: DEBUG

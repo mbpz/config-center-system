@@ -30,8 +30,8 @@ chmod +x dev.sh
 1. 使用命令行访问：
 ```bash
 # 进入MySQL容器
-docker exec -it config-center-mysql mysql -u config_user -p
-# 输入密码：config123
+docker exec -it config-center-mysql mysql -u config_user -p$MYSQL_PASSWORD
+# 输入密码：***
 
 # 查看数据库
 mysql> use config_center;
@@ -44,14 +44,14 @@ mysql> select * from config_item;
 - 端口：3306
 - 数据库：config_center
 - 用户名：config_user
-- 密码：config123
+- 密码：***
 
 ### Redis
 
 1. 使用命令行访问：
 ```bash
 # 进入Redis容器
-docker exec -it config-center-redis redis-cli -a redis123
+docker exec -it config-center-redis redis-cli -a ***
 
 # 查看所有键
 127.0.0.1:6379> keys *
@@ -63,7 +63,7 @@ docker exec -it config-center-redis redis-cli -a redis123
 2. 使用Redis工具访问：
 - 主机：localhost
 - 端口：6379
-- 密码：redis123
+- 密码：***
 
 ## IDE配置
 
@@ -109,7 +109,7 @@ docker-compose up -d --build
 1. 查看缓存状态
 ```bash
 # 查看Redis中的缓存
-docker exec -it config-center-redis redis-cli -a redis123 keys *
+docker exec -it config-center-redis redis-cli -a *** keys *
 
 # 查看本地缓存统计
 访问：http://localhost:8080/actuator/caches
@@ -121,7 +121,7 @@ docker exec -it config-center-redis redis-cli -a redis123 keys *
 docker-compose logs -f mysql
 
 # 查看慢查询
-docker exec -it config-center-mysql mysql -u root -proot123 -e "SHOW VARIABLES LIKE '%slow%';"
+docker exec -it config-center-mysql mysql -u root -p*** -e "SHOW VARIABLES LIKE '%slow%';"
 ```
 
 3. Redis调试
@@ -130,7 +130,7 @@ docker exec -it config-center-mysql mysql -u root -proot123 -e "SHOW VARIABLES L
 docker-compose logs -f redis
 
 # 监控Redis命令
-docker exec -it config-center-redis redis-cli -a redis123 monitor
+docker exec -it config-center-redis redis-cli -a *** monitor
 ```
 
 ## 常见问题
@@ -146,7 +146,7 @@ docker exec -it config-center-redis redis-cli -a redis123 monitor
    - 检查防火墙设置
 
 3. 缓存问题
-   - 清除Redis缓存：docker exec -it config-center-redis redis-cli -a redis123 FLUSHALL
+   - 清除Redis缓存：docker exec -it config-center-redis redis-cli -a *** FLUSHALL
    - 应用重启会自动清除本地缓存
 
 ## 开发建议
