@@ -18,8 +18,8 @@ permissions:
 env:
   JAVA_VERSION: '8'
   GHCR_REGISTRY: ghcr.io
-  DOCKERHUB_REGISTRY: docker.io
-  IMAGE_NAME: mbpz/config-center
+  GHCR_IMAGE_NAME: mbpz/config-center-system
+  DOCKERHUB_IMAGE_NAME: dougzeng/config-center
 
 jobs:
   # =====================================================
@@ -93,8 +93,8 @@ jobs:
           context: ./config-center
           push: true
           tags: |
-            ${{ env.GHCR_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.tag.outputs.TAG }}
-            ${{ env.GHCR_REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+            ${{ env.GHCR_REGISTRY }}/${{ env.GHCR_IMAGE_NAME }}:${{ steps.tag.outputs.TAG }}
+            ${{ env.GHCR_REGISTRY }}/${{ env.GHCR_IMAGE_NAME }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -112,8 +112,8 @@ jobs:
           context: ./config-center
           push: true
           tags: |
-            ${{ env.IMAGE_NAME }}:${{ steps.tag.outputs.TAG }}
-            ${{ env.IMAGE_NAME }}:latest
+            ${{ env.DOCKERHUB_IMAGE_NAME }}:${{ steps.tag.outputs.TAG }}
+            ${{ env.DOCKERHUB_IMAGE_NAME }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -122,10 +122,10 @@ jobs:
           echo "=== Docker 镜像已推送 ==="
           echo ""
           echo "GitHub Container Registry:"
-          echo "  docker pull ${{ env.GHCR_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.tag.outputs.TAG }}"
+          echo "  docker pull ${{ env.GHCR_REGISTRY }}/${{ env.GHCR_IMAGE_NAME }}:${{ steps.tag.outputs.TAG }}"
           echo ""
           echo "Docker Hub:"
-          echo "  docker pull ${{ env.DOCKERHUB_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.tag.outputs.TAG }}"
+          echo "  docker pull ${{ env.DOCKERHUB_IMAGE_NAME }}:${{ steps.tag.outputs.TAG }}"
           echo ""
           echo "快速启动:"
           echo "  docker run -d -p 8080:8080 \\"
@@ -133,4 +133,4 @@ jobs:
           echo "    -e SPRING_DATASOURCE_PASSWORD=xxx \\"
           echo "    -e SPRING_REDIS_PASSWORD=xxx \\"
           echo "    -e CC_ADMIN_PASSWORD=xxx \\"
-          echo "    ${{ env.DOCKERHUB_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.tag.outputs.TAG }}"
+          echo "    ${{ env.DOCKERHUB_IMAGE_NAME }}:${{ steps.tag.outputs.TAG }}"
