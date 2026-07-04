@@ -81,6 +81,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          java-version: '8'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Build JAR
+        working-directory: ./config-center
+        run: mvn clean package -B -DskipTests
+
       - name: Build Docker image
         working-directory: ./config-center
         run: docker build -t config-center:ci-test .
