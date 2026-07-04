@@ -290,21 +290,21 @@ docker-compose logs -f config-center
 
 ---
 
-## 🔧 配置说明
+## 🚀 部署
 
-所有配置通过环境变量传入，详见 `.env.example`。
+### Docker 快速启动
 
-### 关键环境变量
+```bash
+docker run -d -p 8080:8080 \
+  -e SPRING_DATASOURCE_URL=jdbc:mysql://your-mysql:3306/config_center \
+  -e SPRING_DATASOURCE_USERNAME=config_user \
+  -e SPRING_REDIS_HOST=your-redis \
+  -e CC_ADMIN_PASSWORD=your_admin_password \
+  -e CC_MASTER_KEY=your_16_chars_encryption_key \
+  dougzeng/config-center:v0.3.0
+```
 
-| 变量 | 说明 | 默认值 |
-|------|------|--------|
-| `SPRING_DATASOURCE_URL` | MySQL 连接 URL | `jdbc:mysql://localhost:3306/config_center?useSSL=true&serverTimezone=UTC` |
-| `SPRING_DATASOURCE_USERNAME` | MySQL 用户名 | `config_user` |
-| `SPRING_DATASOURCE_PASSWORD` | MySQL 密码 | (必填) |
-| `SPRING_REDIS_HOST` | Redis 主机 | `localhost` |
-| `SPRING_REDIS_PORT` | Redis 端口 | `6379` |
-| `SPRING_REDIS_PASSWORD` | Redis 密码 | (必填) |
-| `SERVER_PORT` | 应用端口 | `8080` |
+> 📖 完整部署指南 (Docker Compose / K8s / 环境变量参考): [docs/DEPLOY.md](docs/DEPLOY.md)
 
 ---
 
@@ -341,6 +341,7 @@ config-center-system/
 │   │   └── app.ts                  # 运行时配置
 │   └── package.json
 ├── docs/
+│   ├── DEPLOY.md                   # 🚀 部署指南
 │   ├── PRD-trust-first.md          # 产品需求文档
 │   ├── design.md                   # 架构设计文档
 │   ├── sdk/README.md               # SDK 设计文档
