@@ -1,0 +1,133 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  JAVA_VERSION: '8'
+  NODE_VERSION: '16'
+
+jobs:
+  # =====================================================
+  # 后端测试 job
+  # =====================================================
+  backend-test:
+    name: Backend Test (Java ${{ env.JAVA_VERSION }})
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Run tests with Maven
+        working-directory: ./config-center
+        run: mvn clean test -B
+
+      - name: Generate JaCoCo coverage report
+        working-directory: ./config-center
+        run: mvn jacoco:report -B
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backend-coverage
+          path: config-center/target/site/jacoco/
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backend-test-results
+          path: config-center/target/surefire-reports/
+
+  # =====================================================
+  # 前端测试 job
+  # =====================================================
+  frontend-test:
+    name: Frontend Test (Node ${{ env.NODE_VERSION }})
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: config-web/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./config-web
+        run: npm ci
+
+      - name: Run ESLint
+        working-directory: ./config-web
+        run: npm run lint
+        continue-on-error: true  # 暂时不阻塞 CI，直至 lint 规则完善
+
+      - name: Build frontend
+        working-directory: ./config-web
+        run: npm run build
+
+  # =====================================================
+  # Docker 构建 job
+  # =====================================================
+  docker-build:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    needs: [backend-test]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        working-directory: ./config-center
+        run: docker build -t config-center:ci-test .
+
+      - name: Verify Docker image
+        run: |
+          docker images | grep config-center
+          echo "✅ Docker image built successfully"
+
+  # =====================================================
+  # SBOM 生成 job
+  # =====================================================
+  sbom:
+    name: Generate SBOM
+    runs-on: ubuntu-latest
+    needs: [backend-test]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Generate SBOM (CycloneDX)
+        working-directory: ./config-center
+        run: mvn clean package -B -DskipTests
+
+      - name: Upload SBOM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: config-center/target/*.sbom.json
